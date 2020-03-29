@@ -5,26 +5,56 @@ const sessionController = require('./controllers/SessionController');
 const profileController = require('./controllers/ProfileController');
 const ongController = require('./controllers/OngController');
 const incidentController = require('./controllers/IncidentController');
+const { celebrate, Segments, Joi } = require('celebrate');
 
 
-routes.get('/', (request, response) => {
-    // return response.send('Hello World');
-    return response.json({
-        evento: 'Semana OmniStack 11',
-        aluno: 'Rodrigo Cocate'
-    });
-});
+// System's login.
+routes.post('/session', celebrate({
+    [Segments.BODY]: Joi.object().keys({
+        id: Joi.string().required(),
+    }),
+}), sessionController.create);
 
-routes.post('/session', sessionController.create);
-routes.get('/profile', profileController.index);
+// User's incidents cases profile.
+routes.get('/profile', celebrate({
+    [Segments.HEADERS]: Joi.object({
+        authorization: Joi.string().required(),
+    }).unknown(),
+}), profileController.index);
 
+// ONG CRUD.
 routes.get('/ongs', ongController.index);
-routes.post('/ongs', ongController.create);
+routes.post('/ongs', celebrate({
+    [Segments.BODY]: Joi.object().keys({
+        name: Joi.string().required(),
+        email: Joi.string().required().email(),
+        whatsapp: Joi.string().required().min(10).max(13), //05511912345678
+        city: Joi.string().required(),
+        uf: Joi.string().required().length(2),
+    })
+}), ongController.create);
 routes.put('/ongs', ongController.update);
 routes.delete('/ongs/:id', ongController.delete);
 
-routes.get('/incidents', incidentController.index);
-routes.post('/incidents', incidentController.create);
-routes.delete('/incidents/:id', incidentController.delete);
+routes.get('/incidents', celebrate({
+    [Segments.QUERY]: Joi.object().keys({
+        page: Joi.number(),
+    }),
+}), incidentController.index);
+routes.post('/incidents', celebrate({
+    [Segments.HEADERS]: Joi.object({
+        authorization: Joi.string().required(),
+    }).unknown(),
+    [Segments.BODY]: Joi.object().keys({
+        title: Joi.string().required(),
+        description: Joi.string().required(),
+        value: Joi.number().required()
+    }),
+}), incidentController.create);
+routes.delete('/incidents/:id', celebrate({
+    [Segments.PARAMS]: Joi.object().keys({
+        id: Joi.number().required(),
+    }),
+}), incidentController.delete);
 
 module.exports = routes;

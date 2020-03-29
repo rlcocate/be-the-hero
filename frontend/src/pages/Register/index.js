@@ -25,7 +25,7 @@ export default function Register() {
         try {
             const response = await api.post('ongs', data);
             console.log(response);
-            alert(response.data.result);
+            alert(`ONG saved with new ID: ${response.data.id}`);
             history.push('/');
         } catch (error) {
             console.log(error);
